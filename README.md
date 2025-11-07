@@ -1,5 +1,9 @@
 # E2E Testing in Legacy Code
 
+- [Java](https://github.com/optivem/e2e-testing-in-legacy-code-java)
+- [.NET](https://github.com/optivem/e2e-testing-in-legacy-code-dotnet)
+- [TypeScript](https://github.com/optivem/e2e-testing-in-legacy-code-typescript)
+
 ## License
 
 [![MIT License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
