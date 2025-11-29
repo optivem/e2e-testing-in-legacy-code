@@ -1,7 +1,7 @@
 services:
 
   frontend:
-    image: ghcr.io/optivem/modern-acceptance-testing-in-legacy-code-frontend/frontend:latest
+    image: ghcr.io/optivem/modern-acceptance-testing-in-legacy-code/frontend:latest
     ports:
       - "3001:3000"
     environment:
@@ -10,7 +10,7 @@ services:
       - backend
 
   backend:
-    image: ghcr.io/optivem/modern-acceptance-testing-in-legacy-code-backend/backend:latest
+    image: ghcr.io/optivem/modern-acceptance-testing-in-legacy-code/backend:latest
     ports:
       - "8081:8080"
     environment:
