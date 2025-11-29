@@ -32,6 +32,14 @@ $SystemConfig = @{
             BuildPath = "..\modern-acceptance-testing-in-legacy-code-backend\backend";
             InstallCommand = $null;
             BuildCommand = "& .\gradlew.bat clean build" }
+        @{ Name = "External Systems";
+            Url = $null;
+            ContainerName = $null;
+            GitRepo = "https://github.com/optivem/modern-acceptance-testing-in-legacy-code-external.git";
+            RepoPath = "..\modern-acceptance-testing-in-legacy-code-external";
+            BuildPath = $null;
+            InstallCommand = $null;
+            BuildCommand = $null }
     )
 
     # External Systems (third-party/mock APIs)
@@ -139,7 +147,9 @@ function Wait-ForServices {
 
     Write-Host "Waiting for system components..." -ForegroundColor Yellow
     foreach ($component in $SystemComponents) {
-        Wait-ForService -Url $component.Url -ServiceName $component.Name -ContainerName $component.ContainerName
+        if ($component.Url) {
+            Wait-ForService -Url $component.Url -ServiceName $component.Name -ContainerName $component.ContainerName
+        }
     }
 
     Write-Host ""
@@ -186,8 +196,10 @@ function Install-Dependencies {
 function Build-System {
     if ($Mode -eq "local") {
         foreach ($component in $SystemComponents) {
-            Write-Host "Building $($component.Name)..." -ForegroundColor Cyan
-            Execute-Command -Command $component.BuildCommand -Path $component.BuildPath
+            if ($component.BuildCommand) {
+                Write-Host "Building $($component.Name)..." -ForegroundColor Cyan
+                Execute-Command -Command $component.BuildCommand -Path $component.BuildPath
+            }
         }
     } else {
         Write-Host "Pipeline mode: Skipping build (using pre-built Docker images)" -ForegroundColor Cyan
