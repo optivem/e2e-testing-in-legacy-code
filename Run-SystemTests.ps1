@@ -59,7 +59,13 @@ $SystemConfig = @{
 
 # Load test configuration only if tests will be run
 if (-not $SkipTests) {
-    $TestConfig = . "$WorkingDirectory\Run-SystemTests.TestConfig.ps1"
+    $TestConfigPath = "$WorkingDirectory\Run-SystemTests.TestConfig.ps1"
+
+    if (-not (Test-Path $TestConfigPath)) {
+        throw "Test configuration file not found at path: $TestConfigPath"
+    }
+
+    $TestConfig = . $TestConfigPath
     $TestCommand = $TestConfig.TestCommand
     $TestReportPath = $TestConfig.TestReportPath
 }
