@@ -19,12 +19,18 @@ $SystemConfig = @{
         @{ Name = "Frontend";
             Url = "http://localhost:3001";
             ContainerName = "frontend";
+            GitRepo = "https://github.com/optivem/modern-acceptance-testing-in-legacy-code-frontend.git";
+            RepoPath = "..\modern-acceptance-testing-in-legacy-code-frontend";
             BuildPath = "..\modern-acceptance-testing-in-legacy-code-frontend\frontend";
+            InstallCommand = "npm install";
             BuildCommand = "npm run build" }
         @{ Name = "Backend API";
             Url = "http://localhost:8081/health";
             ContainerName = "backend";
+            GitRepo = "https://github.com/optivem/modern-acceptance-testing-in-legacy-code-backend.git";
+            RepoPath = "..\modern-acceptance-testing-in-legacy-code-backend";
             BuildPath = "..\modern-acceptance-testing-in-legacy-code-backend\backend";
+            InstallCommand = $null;
             BuildCommand = "& .\gradlew.bat clean build" }
     )
 
@@ -140,6 +146,38 @@ function Wait-ForServices {
     Write-Host "All services are ready!" -ForegroundColor Green
 }
 
+function Clone-Repositories {
+    foreach ($component in $SystemComponents) {
+        if ($component.GitRepo) {
+            $repoPath = Join-Path $PSScriptRoot $component.RepoPath
+            
+            if (Test-Path $repoPath) {
+                Write-Host "Repository already exists: $($component.Name) at $repoPath" -ForegroundColor Yellow
+            } else {
+                Write-Host "Cloning $($component.Name) from $($component.GitRepo)..." -ForegroundColor Cyan
+                $parentPath = Split-Path $repoPath -Parent
+                
+                if (-not (Test-Path $parentPath)) {
+                    New-Item -ItemType Directory -Path $parentPath -Force | Out-Null
+                }
+                
+                Execute-Command -Command "git clone $($component.GitRepo) `"$repoPath`""
+                Write-Host "Successfully cloned $($component.Name)" -ForegroundColor Green
+            }
+        }
+    }
+}
+
+function Install-Dependencies {
+    foreach ($component in $SystemComponents) {
+        if ($component.InstallCommand) {
+            Write-Host "Installing dependencies for $($component.Name)..." -ForegroundColor Cyan
+            Execute-Command -Command $component.InstallCommand -Path $component.BuildPath
+            Write-Host "Dependencies installed for $($component.Name)" -ForegroundColor Green
+        }
+    }
+}
+
 
 
 function Build-System {
@@ -213,6 +251,12 @@ $InitialLocation = Get-Location
 try {
 
     if (-not $TestOnly) {
+        Write-Heading -Text "Clone Repositories"
+        Clone-Repositories
+
+        Write-Heading -Text "Install Dependencies"
+        Install-Dependencies
+
         Write-Heading -Text "Build System"
         Build-System
 
