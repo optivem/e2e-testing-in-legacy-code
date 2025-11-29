@@ -10,7 +10,36 @@ param(
 
 
 # Load configuration
-$Config = . .\Run-SystemTests.Config.ps1
+$SystemConfig = @{
+    # Docker Configuration
+    ContainerName = "modern-acceptance-testing-in-legacy-code"
+
+    # System Components (our application services)
+    SystemComponents = @(
+        @{ Name = "Frontend";
+            Url = "http://localhost:3001";
+            ContainerName = "frontend";
+            BuildPath = "..\modern-acceptance-testing-in-legacy-code-frontend\frontend";
+            BuildCommand = "npm run build" }
+        @{ Name = "Backend API";
+            Url = "http://localhost:8081/health";
+            ContainerName = "backend";
+            BuildPath = "..\modern-acceptance-testing-in-legacy-code-backend\backend";
+            BuildCommand = "& .\gradlew.bat clean build" }
+    )
+
+    # External Systems (third-party/mock APIs)
+    ExternalSystems = @(
+        @{ Name = "ERP API";
+            Url = "http://localhost:9001/erp/health";
+            ContainerName = "external" }
+        @{ Name = "Tax API";
+            Url = "http://localhost:9001/tax/health";
+            ContainerName = "external" }
+    )
+}
+
+$TestConfig = . .\Run-SystemTests.TestConfig.ps1
 
 # Script Configuration
 $ErrorActionPreference = "Continue"
@@ -18,13 +47,14 @@ $MaxAttempts = 10
 $ComposeFile = if ($Mode -eq "pipeline") { "docker-compose.pipeline.yml" } else { "docker-compose.local.yml" }
 
 # Extract configuration values
-$ContainerName = $Config.ContainerName
-$TestCommand = $Config.TestCommand
-$TestReportPath = $Config.TestReportPath
+$ContainerName = $SystemConfig.ContainerName
 
 # Extract component arrays
-$SystemComponents = $Config.SystemComponents
-$ExternalSystems = $Config.ExternalSystems
+$SystemComponents = $SystemConfig.SystemComponents
+$ExternalSystems = $SystemConfig.ExternalSystems
+
+$TestCommand = $TestConfig.TestCommand
+$TestReportPath = $TestConfig.TestReportPath
 
 function Execute-Command {
     param(
