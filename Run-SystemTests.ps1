@@ -169,20 +169,17 @@ function Wait-ForServices {
     Write-Host "All services are ready!" -ForegroundColor Green
 }
 
-function Install-Dependencies {
-    foreach ($component in $SystemComponents) {
-        if ($component.InstallCommand) {
-            Write-Host "Installing dependencies for $($component.Name)..." -ForegroundColor Cyan
-            Execute-Command -Command $component.InstallCommand -Path $component.BuildPath
-            Write-Host "Dependencies installed for $($component.Name)" -ForegroundColor Green
-        }
-    }
-}
-
-
-
 function Build-System {
     if ($Mode -eq "local") {
+
+        foreach ($component in $SystemComponents) {
+            if ($component.InstallCommand) {
+                Write-Host "Installing dependencies for $($component.Name)..." -ForegroundColor Cyan
+                Execute-Command -Command $component.InstallCommand -Path $component.BuildPath
+                Write-Host "Dependencies installed for $($component.Name)" -ForegroundColor Green
+            }
+        }
+
         foreach ($component in $SystemComponents) {
             if ($component.BuildCommand) {
                 Write-Host "Building $($component.Name)..." -ForegroundColor Cyan
@@ -278,9 +275,6 @@ function Test-SystemRunning {
 }
 
 function Restart-System {
-    Write-Heading -Text "Install Dependencies"
-    Install-Dependencies
-
     Write-Heading -Text "Build System"
     Build-System
 
