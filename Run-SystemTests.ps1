@@ -3,7 +3,7 @@ param(
     [ValidateSet("local", "pipeline")]
     [string]$Mode = "local",
 
-    [switch]$RebuildSystem,
+    [switch]$Restart,
     [switch]$SkipTests,
 
     [int]$LogLines = 50,
@@ -277,7 +277,7 @@ function Test-SystemRunning {
     return $false
 }
 
-function Rebuild-System {
+function Restart-System {
     Write-Heading -Text "Install Dependencies"
     Install-Dependencies
 
@@ -299,8 +299,8 @@ $InitialLocation = Get-Location
 
 # Main execution
 try {
-    if( $RebuildSystem) {
-        Rebuild-System
+    if( $Restart) {
+        Restart-System
     } 
     else {
         # Check if system is already running
@@ -309,7 +309,7 @@ try {
         if ($systemRunning) {
             Write-Host "System is already running, skipping build and start steps" -ForegroundColor Yellow
         } else {
-            Rebuild-System
+            Restart-System
         }
     }
 
