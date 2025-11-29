@@ -149,7 +149,10 @@ function Wait-ForServices {
 function Clone-Repositories {
     foreach ($component in $SystemComponents) {
         if ($component.GitRepo) {
-            $repoPath = Join-Path $PSScriptRoot $component.RepoPath
+            # Use current working directory instead of script location for downloaded scripts
+            $baseDir = Get-Location
+            $repoPath = Join-Path $baseDir $component.RepoPath
+            $repoPath = [System.IO.Path]::GetFullPath($repoPath)
             
             if (Test-Path $repoPath) {
                 Write-Host "Repository already exists: $($component.Name) at $repoPath" -ForegroundColor Yellow
