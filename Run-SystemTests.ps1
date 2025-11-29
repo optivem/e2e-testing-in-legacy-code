@@ -62,7 +62,8 @@ if (-not $SkipTests) {
     $TestConfigPath = "$WorkingDirectory\Run-SystemTests.TestConfig.ps1"
 
     if (-not (Test-Path $TestConfigPath)) {
-        throw "Test configuration file not found at path: $TestConfigPath"
+        Write-Host "ERROR: Test configuration file not found at path: $TestConfigPath" -ForegroundColor Red
+        exit 1
     }
 
     $TestConfig = . $TestConfigPath
