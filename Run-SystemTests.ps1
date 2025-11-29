@@ -59,7 +59,9 @@ $SystemConfig = @{
 
 # Load test configuration only if tests will be run
 if (-not $SkipTests) {
+    Write-Host "Loading test configuration..." -ForegroundColor Cyan
     $TestConfigPath = "$WorkingDirectory\Run-SystemTests.TestConfig.ps1"
+    Write-Host "Test configuration path: $TestConfigPath" -ForegroundColor Cyan
 
     if (-not (Test-Path $TestConfigPath)) {
         Write-Host "ERROR: Test configuration file not found at path: $TestConfigPath" -ForegroundColor Red
@@ -70,6 +72,7 @@ if (-not $SkipTests) {
     $TestConfig = . $TestConfigPath
     $TestCommand = $TestConfig.TestCommand
     $TestReportPath = $TestConfig.TestReportPath
+    
 }
 
 # Script Configuration
