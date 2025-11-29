@@ -63,6 +63,7 @@ if (-not $SkipTests) {
 
     if (-not (Test-Path $TestConfigPath)) {
         Write-Host "ERROR: Test configuration file not found at path: $TestConfigPath" -ForegroundColor Red
+        Set-Location $WorkingDirectory
         exit 1
     }
 
