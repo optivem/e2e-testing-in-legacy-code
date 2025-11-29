@@ -3,20 +3,13 @@ param(
     [ValidateSet("local", "pipeline")]
     [string]$Mode = "local",
 
-    [switch]$TestOnly,
-
+    [switch]$RebuildSystem,
     [switch]$SkipTests,
 
     [int]$LogLines = 50,
 
     [string]$WorkingDirectory = (Get-Location).Path
 )
-
-# Validate parameters
-if ($TestOnly -and $SkipTests) {
-    Write-Host "ERROR: Cannot use both -TestOnly and -SkipTests switches together" -ForegroundColor Red
-    exit 1
-}
 
 # Constants
 $TestConfigFileName = "Run-SystemTests.Config.ps1"
@@ -254,28 +247,73 @@ function Write-Heading {
     Write-Host ""
 }
 
+function Test-SystemRunning {
+    # Check if any of the external systems are responding
+    foreach ($system in $ExternalSystems) {
+        try {
+            $response = Invoke-WebRequest -Uri $system.Url -UseBasicParsing -TimeoutSec 2 -ErrorAction SilentlyContinue
+            if ($response.StatusCode -eq 200) {
+                return $true
+            }
+        } catch {
+            # Continue checking other systems
+        }
+    }
+    
+    # Check if any of the system components are responding
+    foreach ($component in $SystemComponents) {
+        if ($component.Url) {
+            try {
+                $response = Invoke-WebRequest -Uri $component.Url -UseBasicParsing -TimeoutSec 2 -ErrorAction SilentlyContinue
+                if ($response.StatusCode -eq 200) {
+                    return $true
+                }
+            } catch {
+                # Continue checking other components
+            }
+        }
+    }
+    
+    return $false
+}
+
+function Rebuild-System {
+    Write-Heading -Text "Install Dependencies"
+    Install-Dependencies
+
+    Write-Heading -Text "Build System"
+    Build-System
+
+    Write-Heading -Text "Stop System"
+    Stop-System
+
+    Write-Heading -Text "Start System"
+    Start-System
+
+    Write-Heading -Text "Wait for System"
+    Wait-ForServices
+}
+
 # Remember starting location
 $InitialLocation = Get-Location
 
 # Main execution
 try {
-
-    if (-not $TestOnly) {
-        Write-Heading -Text "Install Dependencies"
-        Install-Dependencies
-
-        Write-Heading -Text "Build System"
-        Build-System
-
-        Write-Heading -Text "Stop System"
-        Stop-System
-
-        Write-Heading -Text "Start System"
-        Start-System
-
-        Write-Heading -Text "Wait for System"
-        Wait-ForServices
+    if( $RebuildSystem) {
+        Rebuild-System
+    } 
+    else {
+        # Check if system is already running
+        $systemRunning = Test-SystemRunning
+        
+        if ($systemRunning) {
+            Write-Host "System is already running, skipping build and start steps" -ForegroundColor Yellow
+        } else {
+            Rebuild-System
+        }
     }
+
+
 
     if (-not $SkipTests) {
         Write-Heading -Text "Test System"
