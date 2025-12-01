@@ -1,7 +1,9 @@
 param(
-    [Parameter(Position=0)]
     [ValidateSet("local", "pipeline")]
     [string]$Mode = "local",
+
+    [ValidateSet("full", "smoke", "e2e")]
+    [string]$TestMode = "full",
 
     [switch]$Restart,
     [switch]$SkipTests,
@@ -67,6 +69,8 @@ if (-not $SkipTests) {
 
     $TestConfig = . $TestConfigPath
     $TestCommand = $TestConfig.TestCommand
+    $SmokeTestCommand = $TestConfig.SmokeTestCommand
+    $E2ETestCommand = $TestConfig.E2ETestCommand
     $TestReportPath = Join-Path $WorkingDirectory "system-test" $TestConfig.TestReportPath
 }
 
@@ -222,13 +226,37 @@ function Start-System {
     }
 }
 
-function Test-System {
-    Execute-Command -Command $TestCommand -Path "$WorkingDirectory\system-test"
+function Test-System-Selected {
+    param(
+        [string]$Command
+    )
 
-    Write-Host ""
-    Write-Host "All tests passed!" -ForegroundColor Green
-    Write-Host "Test report: " -NoNewline
-    Write-Host $TestReportPath -ForegroundColor Yellow
+    try 
+    {
+        Execute-Command -Command $Command -Path "$WorkingDirectory\system-test"
+
+        Write-Host ""
+        Write-Host "All tests passed!" -ForegroundColor Green
+    } finally {
+        Write-Host "Test report: $TestReportPath"
+    }
+}
+
+function Test-System {
+    switch ($TestMode) {
+        "full" {
+            Test-System-Selected -Command $TestCommand
+        }
+        "smoke" {
+            Test-System-Selected -Command $SmokeTestCommand
+        }
+        "e2e" {
+            Test-System-Selected -Command $E2ETestCommand
+        }
+        default {
+            throw "Unknown test mode: $TestMode"
+        }
+    }
 }
 
 function Write-Heading {
