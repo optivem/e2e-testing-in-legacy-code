@@ -81,8 +81,6 @@ $ContainerName = $SystemConfig.ContainerName
 $SystemComponents = $SystemConfig.SystemComponents
 $ExternalSystems = $SystemConfig.ExternalSystems
 
-$AllTestsPassed = $false
-
 function Execute-Command {
     param(
         [string]$Command,
@@ -237,23 +235,18 @@ function Test-System-Selected {
 
         Write-Host ""
         Write-Host "All $TestType tests passed!" -ForegroundColor Green
-        return $true
     } catch {
         Write-Host ""
         Write-Host "Some $TestType tests failed." -ForegroundColor Red
-        Write-Host "Test report: $TestReportPath" -ForegroundColor Yellow
-        return $false
+        Write-Host "Test report: $TestReportPath"
+        throw
     }
 }
 
 function Test-System {
     
-    $smokeTestsPassed = Test-System-Selected -TestType "smoke" -Command $SmokeTestCommand
-
-    $e2eTestsPassed = Test-System-Selected -TestType "e2e" -Command $E2ETestCommand
-
-    # Set script-level variable for main execution flow
-    $script:AllTestsPassed = $smokeTestsPassed -and $e2eTestsPassed
+    Test-System-Selected -TestType "smoke" -Command $SmokeTestCommand
+    Test-System-Selected -TestType "e2e" -Command $E2ETestCommand
 }
 
 function Write-Heading {
@@ -337,14 +330,6 @@ try {
     }
 
     Write-Heading -Text "DONE" -Color Green
-
-    if (-not $AllTestsPassed) {
-        Set-Location $WorkingDirectory
-        Write-Host "Some tests failed. Opening test report at: $TestReportPath" -ForegroundColor Red
-        Start-Process $TestReportPath
-
-        exit 1
-    }
 } catch {
     Set-Location $WorkingDirectory
     Write-Host ""
