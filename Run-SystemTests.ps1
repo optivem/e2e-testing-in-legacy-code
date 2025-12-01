@@ -67,8 +67,7 @@ if (-not $SkipTests) {
 
     $TestConfig = . $TestConfigPath
     $TestCommand = $TestConfig.TestCommand
-    $TestReportPath = $TestConfig.TestReportPath
-    
+    $TestReportPath = Join-Path $WorkingDirectory "system-test" $TestConfig.TestReportPath
 }
 
 # Script Configuration
