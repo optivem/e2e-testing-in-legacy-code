@@ -229,27 +229,31 @@ function Test-System-Selected {
         [string]$Command
     )
 
+    Write-Host "Running $TestType tests..." -ForegroundColor Cyan
+
     try 
     {
-        Write-Host "Running $TestType tests..." -ForegroundColor Cyan
-
         Execute-Command -Command $Command -Path "$WorkingDirectory\system-test"
 
         Write-Host ""
         Write-Host "All $TestType tests passed!" -ForegroundColor Green
+        return $true
     } catch {
+        Write-Host ""
         Write-Host "Some $TestType tests failed." -ForegroundColor Red
-        Write-Host "Test report: $TestReportPath"
+        Write-Host "Test report: $TestReportPath" -ForegroundColor Yellow
+        return $false
     }
 }
 
 function Test-System {
     
-    Test-System-Selected -TestType "smoke" -Command $SmokeTestCommand
+    $smokeTestsPassed = Test-System-Selected -TestType "smoke" -Command $SmokeTestCommand
 
-    Test-System-Selected -TestType "e2e" -Command $E2ETestCommand
+    $e2eTestsPassed = Test-System-Selected -TestType "e2e" -Command $E2ETestCommand
 
-    $AllTestsPassed = $true
+    # Set script-level variable for main execution flow
+    $script:AllTestsPassed = $smokeTestsPassed -and $e2eTestsPassed
 }
 
 function Write-Heading {
