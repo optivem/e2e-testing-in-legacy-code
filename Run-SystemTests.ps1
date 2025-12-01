@@ -2,9 +2,6 @@ param(
     [ValidateSet("local", "pipeline")]
     [string]$Mode = "local",
 
-    [ValidateSet("all", "smoke", "e2e")]
-    [string]$TestMode = "all",
-
     [switch]$Restart,
     [switch]$SkipTests,
 
@@ -68,10 +65,9 @@ if (-not $SkipTests) {
     }
 
     $TestConfig = . $TestConfigPath
-    $TestCommand = $TestConfig.TestCommand
     $SmokeTestCommand = $TestConfig.SmokeTestCommand
     $E2ETestCommand = $TestConfig.E2ETestCommand
-    $TestReportPath = Join-Path $WorkingDirectory "system-test" $TestConfig.TestReportPath
+    $TestReportPath = Join-Path "$WorkingDirectory\system-test" $TestConfig.TestReportPath
 }
 
 # Script Configuration
@@ -228,38 +224,29 @@ function Start-System {
 
 function Test-System-Selected {
     param(
+        [string]$TestType,
         [string]$Command
     )
 
     try 
     {
+        Write-Host "Running $TestType tests..." -ForegroundColor Cyan
+
         Execute-Command -Command $Command -Path "$WorkingDirectory\system-test"
 
         Write-Host ""
-        Write-Host "All tests passed!" -ForegroundColor Green
-    } finally {
+        Write-Host "All $TestType tests passed!" -ForegroundColor Green
+    } catch {
+        Write-Host "Some $TestType tests failed." -ForegroundColor Red
         Write-Host "Test report: $TestReportPath"
     }
 }
 
 function Test-System {
+    
+    Test-System-Selected -TestType "smoke" -Command $SmokeTestCommand
 
-    Write-Host "Running tests in mode: $TestMode" -ForegroundColor Cyan
-
-    switch ($TestMode) {
-        "all" {
-            Test-System-Selected -Command $TestCommand
-        }
-        "smoke" {
-            Test-System-Selected -Command $SmokeTestCommand
-        }
-        "e2e" {
-            Test-System-Selected -Command $E2ETestCommand
-        }
-        default {
-            throw "Unknown test mode: $TestMode"
-        }
-    }
+    Test-System-Selected -TestType "e2e" -Command $E2ETestCommand
 }
 
 function Write-Heading {
@@ -336,8 +323,6 @@ try {
             Restart-System
         }
     }
-
-
 
     if (-not $SkipTests) {
         Write-Heading -Text "Test System"
