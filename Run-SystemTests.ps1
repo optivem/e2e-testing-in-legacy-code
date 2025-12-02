@@ -64,6 +64,7 @@ if (-not $SkipTests) {
     }
 
     $TestConfig = . $TestConfigPath
+    $TestInstallCommands = $TestConfig.TestInstallCommands
     $SmokeTestCommand = $TestConfig.SmokeTestCommand
     $E2ETestCommand = $TestConfig.E2ETestCommand
     $TestReportPath = Join-Path "$WorkingDirectory\system-test" $TestConfig.TestReportPath
@@ -245,6 +246,18 @@ function Test-System-Selected {
 
 function Test-System {
     
+    if($null -ne $TestInstallCommands) {
+        Write-Host "Installing test dependencies..." -ForegroundColor Cyan
+
+        # Install test dependencies
+        foreach ($installCommand in $TestInstallCommands) { 
+            Write-Host "Installing test dependencies with command: $installCommand" -ForegroundColor Cyan
+            Execute-Command -Command $installCommand -Path "$WorkingDirectory\system-test"
+        }
+    } else {
+        Write-Host "No test dependencies to install." -ForegroundColor Yellow
+    }
+
     Test-System-Selected -TestType "smoke" -Command $SmokeTestCommand
     Test-System-Selected -TestType "e2e" -Command $E2ETestCommand
 }
