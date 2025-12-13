@@ -89,7 +89,7 @@ public class OrderService {
     private BigDecimal getTaxRate(String country) {
         var countryDetails = taxGateway.getTaxDetails(country);
         if (countryDetails.isEmpty()) {
-            throw new ValidationException("Country does not exist: " + country);
+            throw new ValidationException("country", "Country does not exist: " + country);
         }
 
         return countryDetails.get().getTaxRate();
