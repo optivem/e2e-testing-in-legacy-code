@@ -98,13 +98,9 @@ function Execute-Command {
 
         Write-Host "Executing: $Command" -ForegroundColor Cyan
 
-        $output = Invoke-Expression $Command 2>&1
+        # Execute command with real-time output streaming
+        Invoke-Expression $Command
         $exitCode = $LASTEXITCODE
-
-        # Display the output
-        if ($output) {
-            $output | ForEach-Object { Write-Host $_ }
-        }
 
         if ($exitCode -ne 0 -and $null -ne $exitCode) {
             Write-Host ""
@@ -113,8 +109,6 @@ function Execute-Command {
             Write-Host "Command failed with exit code: $exitCode" -ForegroundColor Red
             throw "Failed to execute command: $Command (Exit Code: $exitCode)"
         }
-
-        return $output
 
     } finally {
         if ($Path) {
