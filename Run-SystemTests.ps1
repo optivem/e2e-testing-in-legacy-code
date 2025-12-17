@@ -64,10 +64,7 @@ if (-not $SkipTests) {
     }
 
     $TestConfig = . $TestConfigPath
-    $TestInstallCommands = $TestConfig.TestInstallCommands
-    $SmokeTestCommand = $TestConfig.SmokeTestCommand
-    $E2ETestCommand = $TestConfig.E2ETestCommand
-    $TestReportPath = Join-Path "$WorkingDirectory\system-test" $TestConfig.TestReportPath
+    $Tests = $TestConfig.Tests
 }
 
 # Script Configuration
@@ -291,42 +288,43 @@ function Start-System {
 
 function Test-System-Selected {
     param(
-        [string]$TestType,
-        [string]$Command
+        [hashtable]$Test
     )
 
-    Write-Host "Running $TestType tests..." -ForegroundColor Cyan
+    $TestName = $Test.Name
+    $TestCommand = $Test.Command
+    $TestPath = Join-Path $WorkingDirectory $Test.Path
+    $TestReportPath = Join-Path $WorkingDirectory $Test.TestReportPath
+    $TestInstallCommands = $Test.TestInstallCommands
+
+    Write-Host "Running $TestName..." -ForegroundColor Cyan
+
+    # Install test dependencies if specified
+    if ($null -ne $TestInstallCommands) {
+        foreach ($installCommand in $TestInstallCommands) {
+            Write-Host "Installing test dependencies: $installCommand" -ForegroundColor Cyan
+            Execute-Command -Command $installCommand -Path $TestPath
+        }
+    }
 
     try 
     {
-        Execute-Command -Command $Command -Path "$WorkingDirectory\system-test"
+        Execute-Command -Command $TestCommand -Path $TestPath
 
         Write-Host ""
-        Write-Host "All $TestType tests passed!" -ForegroundColor Green
+        Write-Host "All $TestName passed!" -ForegroundColor Green
     } catch {
         Write-Host ""
-        Write-Host "Some $TestType tests failed." -ForegroundColor Red
+        Write-Host "Some $TestName failed." -ForegroundColor Red
         Write-Host "Test report: $TestReportPath"
         throw
     }
 }
 
 function Test-System {
-    
-    if($null -ne $TestInstallCommands) {
-        Write-Host "Installing test dependencies..." -ForegroundColor Cyan
-
-        # Install test dependencies
-        foreach ($installCommand in $TestInstallCommands) { 
-            Write-Host "Installing test dependencies with command: $installCommand" -ForegroundColor Cyan
-            Execute-Command -Command $installCommand -Path "$WorkingDirectory\system-test"
-        }
-    } else {
-        Write-Host "No test dependencies to install." -ForegroundColor Yellow
+    foreach ($test in $Tests) {
+        Test-System-Selected -Test $test
     }
-
-    Test-System-Selected -TestType "smoke" -Command $SmokeTestCommand
-    Test-System-Selected -TestType "e2e" -Command $E2ETestCommand
 }
 
 function Write-Heading {
