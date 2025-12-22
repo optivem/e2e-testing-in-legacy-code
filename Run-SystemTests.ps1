@@ -4,6 +4,7 @@ param(
 
     [string]$TestId,
 
+    [switch]$Rebuild,
     [switch]$Restart,
     [switch]$SkipTests,
 
@@ -34,12 +35,6 @@ $SystemConfig = @{
             BuildPath = "backend";
             InstallCommand = $null;
             BuildCommand = "& .\gradlew.bat clean build" }
-        @{ Name = "External Systems";
-            Url = $null;
-            ContainerName = $null;
-            BuildPath = $null;
-            InstallCommand = $null;
-            BuildCommand = $null }
     )
 
     # External Systems (third-party/mock APIs)
@@ -50,6 +45,12 @@ $SystemConfig = @{
         @{ Name = "Tax API";
             Url = "http://localhost:9001/tax/health";
             ContainerName = "external" }
+        @{ Name = "ERP API (Stub)";
+            Url = "http://localhost:9002/erp/health";
+            ContainerName = "external-stub" }
+        @{ Name = "Tax API (Stub)";
+            Url = "http://localhost:9002/tax/health";
+            ContainerName = "external-stub" }
     )
 }
 
@@ -382,6 +383,12 @@ function Test-SystemRunning {
     return $false
 }
 
+
+function Rebuild-System {
+    Write-Heading -Text "Build System"
+    Build-System
+}
+
 function Restart-System {
     Write-Heading -Text "Build System"
     Build-System
@@ -403,6 +410,11 @@ $InitialLocation = Get-Location
 try {
     Write-Heading -Text "Testing Prerequisites"
     Test-Prerequisites
+
+    if($Rebuild) {
+        Rebuild-System
+        $Restart = $true
+    }
 
     if( $Restart) {
         Restart-System
