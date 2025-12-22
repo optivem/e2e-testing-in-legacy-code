@@ -1,0 +1,47 @@
+name: modern-acceptance-testing-real
+
+services:
+
+  frontend:
+    extends:
+      file: docker-compose.pipeline.yml
+      service: frontend-base
+    ports:
+      - "3001:3000"
+    environment:
+      - BACKEND_API_URL=http://backend:8080
+    depends_on:
+      - backend
+
+  backend:
+    extends:
+      file: docker-compose.pipeline.yml
+      service: backend-base
+    ports:
+      - "8081:8080"
+    environment:
+      - ALLOWED_ORIGINS=http://localhost:3001,http://frontend:3000
+      - ERP_API_URL=http://external-real:9000/erp/api
+      - TAX_API_URL=http://external-real:9000/tax/api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      external-real:
+        condition: service_started
+
+  postgres:
+    extends:
+      file: docker-compose.pipeline.yml
+      service: postgres-base
+
+  external-real:
+    image: node:18-alpine
+    ports:
+      - "9001:9000"
+    volumes:
+      - ./external:/app
+    working_dir: /app
+    command: sh -c "npm install && npm start"
+
+volumes:
+  postgres-data:

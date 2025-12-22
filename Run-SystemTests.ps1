@@ -99,11 +99,7 @@ $script:ExternalSystems = $null
 function Set-CurrentMode {
     param([string]$ExternalMode)
     
-    $script:ComposeFile = if ($Mode -eq "pipeline") { 
-        "docker-compose.pipeline.yml" 
-    } else { 
-        "docker-compose.local.$ExternalMode.yml"
-    }
+    $script:ComposeFile = "docker-compose.$Mode.$ExternalMode.yml"
     
     $modeConfig = $SystemConfig[$ExternalMode]
     $script:ContainerName = $modeConfig.ContainerName
