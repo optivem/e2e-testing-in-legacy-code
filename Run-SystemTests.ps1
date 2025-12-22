@@ -126,10 +126,10 @@ function Execute-Command {
 function Test-PowerShellVersion {
     $psVersion = $PSVersionTable.PSVersion
     
-    if ($psVersion.Major -lt 7) {
-        Write-Host "[✗] PowerShell 7+ required. Found: $($psVersion.Major).$($psVersion.Minor)" -ForegroundColor Red
+    if ($psVersion.Major -lt 5) {
+        Write-Host "[✗] PowerShell 5+ required. Found: $($psVersion.Major).$($psVersion.Minor)" -ForegroundColor Red
         Write-Host "    Download: https://github.com/PowerShell/PowerShell" -ForegroundColor Yellow
-        throw "PowerShell 7+ is required"
+        throw "PowerShell 5+ is required"
     }
 }
 
