@@ -2,9 +2,6 @@ param(
     [ValidateSet("local", "pipeline")]
     [string]$Mode = "local",
 
-    [ValidateSet("real", "stub")]
-    [string]$ExternalMode = "real",
-
     [string]$TestId,
 
     [switch]$Rebuild,
@@ -18,6 +15,7 @@ param(
 
 # Constants
 $TestConfigFileName = "Run-SystemTests.Config.ps1"
+$ExternalModes = @("real", "stub")
 
 # Load configuration - keyed by ExternalMode
 $SystemConfig = @{
@@ -91,17 +89,27 @@ if (-not $SkipTests) {
 # Script Configuration
 $ErrorActionPreference = "Continue"
 $MaxAttempts = 10
-$ComposeFile = if ($Mode -eq "pipeline") { 
-    "docker-compose.pipeline.yml" 
-} else { 
-    "docker-compose.local.$ExternalMode.yml"
-}
 
-# Extract configuration values based on ExternalMode
-$ModeConfig = $SystemConfig[$ExternalMode]
-$ContainerName = $ModeConfig.ContainerName
-$SystemComponents = $ModeConfig.SystemComponents
-$ExternalSystems = $ModeConfig.ExternalSystems
+# Variables set by Set-CurrentMode
+$script:ComposeFile = $null
+$script:ContainerName = $null
+$script:SystemComponents = $null
+$script:ExternalSystems = $null
+
+function Set-CurrentMode {
+    param([string]$ExternalMode)
+    
+    $script:ComposeFile = if ($Mode -eq "pipeline") { 
+        "docker-compose.pipeline.yml" 
+    } else { 
+        "docker-compose.local.$ExternalMode.yml"
+    }
+    
+    $modeConfig = $SystemConfig[$ExternalMode]
+    $script:ContainerName = $modeConfig.ContainerName
+    $script:SystemComponents = $modeConfig.SystemComponents
+    $script:ExternalSystems = $modeConfig.ExternalSystems
+}
 
 function Execute-Command {
     param(
@@ -396,23 +404,26 @@ try {
     Write-Heading -Text "Testing Prerequisites"
     Test-Prerequisites
 
-    Write-Heading -Text "Configure External APIs"
-    Set-ExternalApiUrls -ExternalMode $ExternalMode
+    # Start/restart systems for each mode
+    foreach ($externalMode in $ExternalModes) {
+        Set-CurrentMode -ExternalMode $externalMode
+        Write-Heading -Text "System: $($externalMode.ToUpper())"
 
-    if($Rebuild) {
-        Restart-System -ForceBuild
-    }
-    elseif($Restart) {
-        Restart-System
-    } 
-    else {
-        # Check if system is already running
-        $systemRunning = Test-SystemRunning
-        
-        if ($systemRunning) {
-            Write-Host "System is already running, skipping restart" -ForegroundColor Yellow
-        } else {
+        if($Rebuild) {
+            Restart-System -ForceBuild
+        }
+        elseif($Restart) {
             Restart-System
+        } 
+        else {
+            # Check if system is already running
+            $systemRunning = Test-SystemRunning
+            
+            if ($systemRunning) {
+                Write-Host "System is already running, skipping restart" -ForegroundColor Yellow
+            } else {
+                Restart-System
+            }
         }
     }
 
