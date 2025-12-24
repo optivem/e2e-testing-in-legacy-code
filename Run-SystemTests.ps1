@@ -66,6 +66,9 @@ $SystemConfig = @{
             @{ Name = "Tax API (Stub)";
                 Url = "http://localhost:9002/tax/health";
                 ContainerName = "external-stub" }
+            @{ Name = "Clock API (Stub)";
+                Url = "http://localhost:9002/clock/health";
+                ContainerName = "external-stub" }
         )
     }
 }

@@ -29,6 +29,15 @@ server.get('/tax/health', (req, res) => {
   });
 });
 
+// Clock subsystem health check
+server.get('/clock/health', (req, res) => {
+  res.status(200).json({
+    status: 'UP',
+    subsystem: 'Clock',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // In-memory data for ERP API
 const erpRouter = jsonServer.router({
   products: [
@@ -113,5 +122,6 @@ server.listen(port, () => {
   console.log(`ERP API: http://localhost:${port}/erp/api/products`);
   console.log(`Tax Health: http://localhost:${port}/tax/health`);
   console.log(`Tax API: http://localhost:${port}/tax/api/countries`);
+  console.log(`Clock Health: http://localhost:${port}/clock/health`);
 });
 
