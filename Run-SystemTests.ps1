@@ -178,26 +178,6 @@ function Test-Prerequisites {
     Test-DockerDesktop
 }
 
-function Set-ExternalApiUrls {
-    param(
-        [ValidateSet("real", "stub")]
-        [string]$ExternalMode
-    )
-
-    if ($ExternalMode -eq "stub") {
-        $env:ERP_API_URL = "http://external-stub:8080/erp"
-        $env:TAX_API_URL = "http://external-stub:8080/tax"
-        Write-Host "External mode: STUB (WireMock)" -ForegroundColor Yellow
-    } else {
-        $env:ERP_API_URL = "http://external:9000/erp"
-        $env:TAX_API_URL = "http://external:9000/tax"
-        Write-Host "External mode: REAL" -ForegroundColor Green
-    }
-    
-    Write-Host \"  ERP_API_URL: $env:ERP_API_URL\" -ForegroundColor Gray
-    Write-Host \"  TAX_API_URL: $env:TAX_API_URL\" -ForegroundColor Gray
-}
-
 function Wait-ForService {
     param(
         [string]$Url,
