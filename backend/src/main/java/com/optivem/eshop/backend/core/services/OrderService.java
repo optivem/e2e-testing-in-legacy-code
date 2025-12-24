@@ -8,6 +8,7 @@ import com.optivem.eshop.backend.core.entities.OrderStatus;
 import com.optivem.eshop.backend.core.exceptions.NotExistValidationException;
 import com.optivem.eshop.backend.core.exceptions.ValidationException;
 import com.optivem.eshop.backend.core.repositories.OrderRepository;
+import com.optivem.eshop.backend.core.services.external.ClockGateway;
 import com.optivem.eshop.backend.core.services.external.ErpGateway;
 import com.optivem.eshop.backend.core.services.external.TaxGateway;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.MonthDay;
+import java.time.ZoneId;
 
 @Service
 public class OrderService {
@@ -30,11 +32,13 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ErpGateway erpGateway;
     private final TaxGateway taxGateway;
+    private final ClockGateway clockGateway;
 
-    public OrderService(OrderRepository orderRepository, ErpGateway erpGateway, TaxGateway taxGateway) {
+    public OrderService(OrderRepository orderRepository, ErpGateway erpGateway, TaxGateway taxGateway, ClockGateway clockGateway) {
         this.orderRepository = orderRepository;
         this.erpGateway = erpGateway;
         this.taxGateway = taxGateway;
+        this.clockGateway = clockGateway;
     }
 
     public PlaceOrderResponse placeOrder(PlaceOrderRequest request) {
@@ -43,7 +47,7 @@ public class OrderService {
         var country = request.getCountry();
 
         var orderNumber = generateOrderNumber();
-        var orderTimestamp = Instant.now();
+        var orderTimestamp = clockGateway.getCurrentTime();
         var unitPrice = getUnitPrice(sku);
         var discountRate = getDiscountRate();
         var taxRate = getTaxRate(country);
@@ -76,7 +80,7 @@ public class OrderService {
     }
 
     private BigDecimal getDiscountRate() {
-        var now = LocalDateTime.now();
+        var now = LocalDateTime.ofInstant(clockGateway.getCurrentTime(), ZoneId.systemDefault());
         var currentTime = now.toLocalTime();
 
         if(currentTime.isBefore(ORDER_PLACEMENT_CUTOFF_TIME) || currentTime.equals(ORDER_PLACEMENT_CUTOFF_TIME)) {
@@ -139,7 +143,7 @@ public class OrderService {
             throw new ValidationException("Order has already been cancelled");
         }
 
-        var now = LocalDateTime.now();
+        var now = LocalDateTime.ofInstant(clockGateway.getCurrentTime(), ZoneId.systemDefault());
         var currentDate = MonthDay.from(now);
         var currentTime = now.toLocalTime();
 
