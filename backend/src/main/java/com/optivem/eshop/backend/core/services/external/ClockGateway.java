@@ -25,6 +25,8 @@ public class ClockGateway {
     private String clockUrl;
 
     public Instant getCurrentTime() {
+        System.out.println("External system mode: " + externalSystemMode);
+
         if ("real".equals(externalSystemMode)) {
             return getRealTime();
         } else if ("stub".equals(externalSystemMode)) {
